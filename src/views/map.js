@@ -1,16 +1,21 @@
 import { areas, sideQuest } from '../data/problems.js';
-import { loadProgress } from '../state/progress.js';
+import { loadProgress, saveProgress, setBonfireDone } from '../state/progress.js';
 import { isAreaUnlocked, areaProgress, isSideQuestUnlocked } from '../lib/unlock.js';
+import { pickBonfireProblem } from '../lib/bonfire.js';
+import { leetcodeUrl } from '../lib/links.js';
+
+let mapPickedBonfireMap = {};
 
 export function renderMapView(container) {
-  const state = loadProgress();
+  let state = loadProgress();
 
   const areaNodesHtml = areas
-    .map((area) => {
+    .map((area, idx) => {
       const unlocked = isAreaUnlocked(state, areas, area.id);
       const { done, total } = areaProgress(state, area);
       const isConquered = area.boss && state.problems[area.boss.id]?.status === 'cleared';
       const isBossSkipped = Boolean(state.bossSkipped[area.id]);
+      const isBossFinished = isConquered || isBossSkipped;
 
       let status = 'locked';
       let statusLabel = 'Locked';
@@ -36,6 +41,40 @@ export function renderMapView(container) {
       const cardTag = isClickable ? 'a' : 'div';
       const hrefAttr = isClickable ? `href="#/area/${area.id}"` : '';
 
+      // Bonfire Revision for Areas > 1 when boss is cleared or skipped
+      const previousArea = idx > 0 ? areas[idx - 1] : null;
+      const isBonfireRested = Boolean(state.bonfireDone?.[area.id]);
+      let bonfireMapHtml = '';
+
+      if (isBossFinished && previousArea) {
+        const picked = mapPickedBonfireMap[area.id];
+        bonfireMapHtml = `
+          <div class="map-bonfire-snippet ${isBonfireRested ? 'bonfire-rested' : ''}" data-area-id="${area.id}">
+            <div class="map-bonfire-header">
+              <span class="bonfire-flame-icon">🔥</span>
+              <span class="bonfire-text">Bonfire Revision (${previousArea.name})</span>
+              <span class="bonfire-status-badge ${isBonfireRested ? 'badge-rested' : 'badge-unlit'}">
+                ${isBonfireRested ? 'Rested' : 'Unlit'}
+              </span>
+            </div>
+            ${
+              picked
+                ? `<div class="map-bonfire-picked">
+                     <span>#${picked.number} ${picked.title}</span>
+                     <a href="${leetcodeUrl(picked.slug)}" target="_blank" rel="noopener noreferrer" class="lc-link">Solve ↗</a>
+                   </div>`
+                : ''
+            }
+            <div class="map-bonfire-btns">
+              <button type="button" class="action-btn" data-action="map-pick-bonfire">Pick Problem</button>
+              <button type="button" class="action-btn ${isBonfireRested ? 'btn-clear active' : ''}" data-action="map-toggle-rest">
+                ${isBonfireRested ? 'Rested ✓' : 'Rest at Bonfire'}
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <li class="map-node-wrapper">
           <${cardTag} ${hrefAttr} class="area-card area-${status}" ${isClickable ? '' : 'aria-disabled="true"'}>
@@ -57,6 +96,7 @@ export function renderMapView(container) {
               </div>
             </div>
           </${cardTag}>
+          ${bonfireMapHtml}
         </li>
       `;
     })
@@ -127,4 +167,36 @@ export function renderMapView(container) {
       </section>
     </div>
   `;
+
+  // Event delegation on container for map bonfire actions
+  container.onclick = (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const snippet = btn.closest('[data-area-id]');
+    if (!snippet) return;
+
+    const areaId = snippet.dataset.areaId;
+    const areaIdx = areas.findIndex((a) => a.id === areaId);
+    const previousArea = areaIdx > 0 ? areas[areaIdx - 1] : null;
+
+    if (action === 'map-pick-bonfire') {
+      const picked = pickBonfireProblem(state, previousArea);
+      if (!picked) {
+        alert(`No cleared problems found in ${previousArea.name} to revise.`);
+      } else {
+        mapPickedBonfireMap[areaId] = picked;
+      }
+      renderMapView(container);
+      return;
+    }
+
+    if (action === 'map-toggle-rest') {
+      const currentRested = Boolean(state.bonfireDone?.[areaId]);
+      state = setBonfireDone(state, areaId, !currentRested);
+      saveProgress(state);
+      renderMapView(container);
+    }
+  };
 }

@@ -1,6 +1,7 @@
 import { areas } from '../data/problems.js';
-import { loadProgress, saveProgress, setStatus, setBossSkipped, setNote } from '../state/progress.js';
+import { loadProgress, saveProgress, setStatus, setBossSkipped, setNote, setBonfireDone } from '../state/progress.js';
 import { isAreaUnlocked, isBossUnlocked, needsResolve } from '../lib/unlock.js';
+import { pickBonfireProblem } from '../lib/bonfire.js';
 import { leetcodeUrl } from '../lib/links.js';
 
 function getTodayString() {
@@ -8,10 +9,12 @@ function getTodayString() {
 }
 
 let debounceTimer = null;
+let currentPickedProblem = null;
 
 export function renderAreaView(container, params, triggerDiedBanner = false) {
   const areaId = params?.id;
-  const area = areas.find((a) => a.id === areaId);
+  const areaIndex = areas.findIndex((a) => a.id === areaId);
+  const area = areas[areaIndex];
 
   // If area not found, redirect to map
   if (!area) {
@@ -31,7 +34,12 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
   const bossUnlocked = isBossUnlocked(state, area);
   const isBossCleared = area.boss && state.problems[area.boss.id]?.status === 'cleared';
   const isBossSkipped = Boolean(state.bossSkipped[area.id]);
+  const isBossFinished = isBossCleared || isBossSkipped;
   const currentNote = state.notes[area.id] || '';
+
+  // Bonfire checks (available for areas > 1 after boss is conquered or moved on)
+  const previousArea = areaIndex > 0 ? areas[areaIndex - 1] : null;
+  const isBonfireRested = Boolean(state.bonfireDone?.[area.id]);
 
   function renderProblemRow(problem, isEasy = false, isBoss = false) {
     const probState = state.problems[problem.id] || { status: 'untouched', diedOn: null, clearedOn: null };
@@ -42,7 +50,6 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     const isSkipped = status === 'skipped';
     const readyToResolve = isDied && needsResolve(probState, today);
 
-    // Disabled rule: if problem died today, Cleared is disabled
     const disableCleared = isDied && !readyToResolve;
 
     let badgeHtml = '';
@@ -150,6 +157,53 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     `
     : '';
 
+  // Bonfire card rendering
+  let bonfireCardHtml = '';
+  if (isBossFinished && previousArea) {
+    let pickDetailsHtml = '';
+    if (currentPickedProblem) {
+      pickDetailsHtml = `
+        <div class="bonfire-picked-card">
+          <span class="bonfire-picked-label">Selected for Revision (${previousArea.name}):</span>
+          <div class="bonfire-problem-info">
+            <strong>#${currentPickedProblem.number} ${currentPickedProblem.title}</strong>
+            <a href="${leetcodeUrl(currentPickedProblem.slug)}" target="_blank" rel="noopener noreferrer" class="lc-link">
+              Open on LeetCode ↗
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    bonfireCardHtml = `
+      <section class="bonfire-card ${isBonfireRested ? 'bonfire-rested' : ''}">
+        <div class="bonfire-card-header">
+          <div class="bonfire-title-group">
+            <span class="bonfire-flame-icon">🔥</span>
+            <div>
+              <h3>Bonfire: Revision Checkpoint</h3>
+              <p class="bonfire-desc">"Redo one random problem from the previous area before moving on."</p>
+            </div>
+          </div>
+          <span class="bonfire-status-badge ${isBonfireRested ? 'badge-rested' : 'badge-unlit'}">
+            ${isBonfireRested ? 'Bonfire Kindled (Rested)' : 'Unlit Bonfire'}
+          </span>
+        </div>
+
+        ${pickDetailsHtml}
+
+        <div class="bonfire-actions">
+          <button type="button" class="bonfire-btn btn-pick-problem" data-action="pick-bonfire">
+            <span>🎲</span> Pick my problem
+          </button>
+          <button type="button" class="bonfire-btn btn-rest-bonfire ${isBonfireRested ? 'active' : ''}" data-action="toggle-rest">
+            <span>🛡️</span> ${isBonfireRested ? 'Rested (Click to rekindle)' : 'Done, I rested at the bonfire'}
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
   const notesPlaceholder = `1. The Cue: 
 2. The Template: 
 3. The Common Bug: 
@@ -175,6 +229,8 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
           </p>
         </div>
       </header>
+
+      ${bonfireCardHtml}
 
       <!-- Easy Tier -->
       <section class="tier-section">
@@ -237,7 +293,7 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     </div>
   `;
 
-  // Safely populate textarea value to prevent XSS / markup issues
+  // Safely populate textarea value
   const textarea = container.querySelector('#area-notes-input');
   if (textarea) {
     textarea.value = currentNote;
@@ -261,7 +317,7 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     });
   }
 
-  // If YOU DIED banner is rendered, remove after animation completes
+  // Clear YOU DIED banner if rendered
   if (triggerDiedBanner) {
     const overlay = document.getElementById('you-died-overlay');
     if (overlay) {
@@ -273,12 +329,32 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     }
   }
 
-  // Event delegation on container for button clicks
+  // Event delegation on container
   container.onclick = (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn || btn.disabled) return;
 
     const action = btn.dataset.action;
+
+    // Bonfire Actions
+    if (action === 'pick-bonfire') {
+      const picked = pickBonfireProblem(state, previousArea);
+      if (!picked) {
+        alert(`No cleared problems found in ${previousArea.name} to revise.`);
+      } else {
+        currentPickedProblem = picked;
+      }
+      renderAreaView(container, params, false);
+      return;
+    }
+
+    if (action === 'toggle-rest') {
+      const nextRestedState = !isBonfireRested;
+      state = setBonfireDone(state, area.id, nextRestedState);
+      saveProgress(state);
+      renderAreaView(container, params, false);
+      return;
+    }
 
     if (action === 'toggle-move-on') {
       const nextSkippedState = !isBossSkipped;

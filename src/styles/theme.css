@@ -16,6 +16,9 @@
   --dragon-purple: #8c5cdb;
   --dragon-glow: rgba(140, 92, 219, 0.3);
 
+  --bonfire-flame: #ff6200;
+  --bonfire-glow: rgba(255, 98, 0, 0.3);
+
   --status-conquered: #4fa86c;
   --status-conquered-glow: rgba(79, 168, 108, 0.3);
   --status-moved-on: #967f4d;
@@ -385,6 +388,54 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-muted);
 }
 
+/* Map Bonfire Snippet */
+.map-bonfire-snippet {
+  margin-top: 0.5rem;
+  background: rgba(255, 98, 0, 0.05);
+  border: 1px dashed rgba(255, 98, 0, 0.35);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.map-bonfire-snippet.bonfire-rested {
+  background: rgba(79, 168, 108, 0.05);
+  border-color: rgba(79, 168, 108, 0.35);
+}
+
+.map-bonfire-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.bonfire-text {
+  color: var(--text-bright);
+  font-weight: 500;
+  flex: 1;
+  margin-left: 0.4rem;
+}
+
+.map-bonfire-picked {
+  font-size: 0.8rem;
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111116;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+
+.map-bonfire-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Side Quest Branch in Map */
 .side-quest-branch-section {
   margin-top: 1rem;
@@ -621,6 +672,134 @@ h1, h2, h3, h4, h5, h6 {
 
 .reminder-text strong {
   color: var(--ember-bright);
+}
+
+/* Bonfire Card */
+.bonfire-card {
+  background: linear-gradient(180deg, #1f140c 0%, #150e09 100%);
+  border: 1px solid rgba(255, 98, 0, 0.35);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 0 15px rgba(255, 98, 0, 0.1);
+}
+
+.bonfire-card.bonfire-rested {
+  background: linear-gradient(180deg, #101c13 0%, #0a140d 100%);
+  border-color: rgba(79, 168, 108, 0.4);
+  box-shadow: 0 0 15px rgba(79, 168, 108, 0.1);
+}
+
+.bonfire-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.bonfire-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.bonfire-flame-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.bonfire-title-group h3 {
+  font-size: 1.15rem;
+  color: var(--gold-bright);
+  margin-bottom: 0.2rem;
+}
+
+.bonfire-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.bonfire-status-badge {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.badge-unlit {
+  background: rgba(255, 98, 0, 0.15);
+  color: #ff914d;
+  border: 1px solid var(--bonfire-flame);
+}
+
+.badge-rested {
+  background: rgba(79, 168, 108, 0.15);
+  color: #6ed68f;
+  border: 1px solid var(--status-conquered);
+}
+
+.bonfire-picked-card {
+  background: #110e0a;
+  border: 1px solid #332015;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bonfire-picked-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bonfire-problem-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gold-bright);
+}
+
+.bonfire-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bonfire-btn {
+  background: #18120d;
+  color: var(--text-bright);
+  border: 1px solid #4a2c19;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-speed);
+}
+
+.bonfire-btn:hover {
+  background: #2b180d;
+  border-color: var(--bonfire-flame);
+  color: #ffab73;
+}
+
+.bonfire-btn.active {
+  background: var(--status-conquered);
+  color: #fff;
+  border-color: var(--status-conquered);
 }
 
 /* Side Quest Key Idea Box */

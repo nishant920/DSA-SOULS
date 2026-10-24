@@ -14,7 +14,8 @@ export function getDefaultState() {
   return {
     problems: {},
     notes: {},
-    bossSkipped: {}
+    bossSkipped: {},
+    bonfireDone: {}
   };
 }
 
@@ -38,7 +39,8 @@ export function loadProgress() {
     return {
       problems: parsed.problems && typeof parsed.problems === "object" ? parsed.problems : {},
       notes: parsed.notes && typeof parsed.notes === "object" ? parsed.notes : {},
-      bossSkipped: parsed.bossSkipped && typeof parsed.bossSkipped === "object" ? parsed.bossSkipped : {}
+      bossSkipped: parsed.bossSkipped && typeof parsed.bossSkipped === "object" ? parsed.bossSkipped : {},
+      bonfireDone: parsed.bonfireDone && typeof parsed.bonfireDone === "object" ? parsed.bonfireDone : {}
     };
   } catch {
     return getDefaultState();
@@ -108,6 +110,20 @@ export function setBossSkipped(state, areaId, bool) {
     ...state,
     bossSkipped: {
       ...state.bossSkipped,
+      [areaId]: Boolean(bool)
+    }
+  };
+}
+
+/**
+ * Pure update: sets bonfireDone flag for an area
+ * @returns {Object} New state object
+ */
+export function setBonfireDone(state, areaId, bool) {
+  return {
+    ...state,
+    bonfireDone: {
+      ...(state.bonfireDone || {}),
       [areaId]: Boolean(bool)
     }
   };

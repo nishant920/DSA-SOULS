@@ -27,6 +27,11 @@ export function validateProgressData(data) {
     return { valid: false, error: "Missing or invalid 'bossSkipped' map." };
   }
 
+  // Optional bonfireDone validation if present
+  if (data.bonfireDone && (typeof data.bonfireDone !== "object" || Array.isArray(data.bonfireDone))) {
+    return { valid: false, error: "Invalid 'bonfireDone' map." };
+  }
+
   // Validate problems map
   const validStatuses = new Set(["untouched", "cleared", "died", "skipped"]);
   for (const [probId, probObj] of Object.entries(data.problems)) {
@@ -56,7 +61,8 @@ export function validateProgressData(data) {
   const cleanState = {
     problems: { ...data.problems },
     notes: { ...data.notes },
-    bossSkipped: { ...data.bossSkipped }
+    bossSkipped: { ...data.bossSkipped },
+    bonfireDone: data.bonfireDone ? { ...data.bonfireDone } : {}
   };
 
   return { valid: true, state: cleanState };

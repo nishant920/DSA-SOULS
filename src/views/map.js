@@ -1,6 +1,6 @@
-import { areas } from '../data/problems.js';
+import { areas, sideQuest } from '../data/problems.js';
 import { loadProgress } from '../state/progress.js';
-import { isAreaUnlocked, areaProgress } from '../lib/unlock.js';
+import { isAreaUnlocked, areaProgress, isSideQuestUnlocked } from '../lib/unlock.js';
 
 export function renderMapView(container) {
   const state = loadProgress();
@@ -62,6 +62,51 @@ export function renderMapView(container) {
     })
     .join('');
 
+  // Side quest branch unlock state
+  const sideQuestUnlocked = isSideQuestUnlocked(state, areas, sideQuest);
+  
+  // Independent side quest progress calculation
+  const sideQuestProblems = [
+    ...sideQuest.warmup,
+    ...sideQuest.medium,
+    sideQuest.miniBoss,
+    sideQuest.hiddenBoss
+  ];
+  const sqTotal = sideQuestProblems.length;
+  const sqDone = sideQuestProblems.filter((p) => {
+    const status = state.problems[p.id]?.status;
+    return status === 'cleared' || status === 'skipped';
+  }).length;
+  const sqPercent = Math.round((sqDone / sqTotal) * 100);
+
+  const sqTag = sideQuestUnlocked ? 'a' : 'div';
+  const sqHref = sideQuestUnlocked ? 'href="#/side-quest"' : '';
+
+  const sideQuestBranchHtml = `
+    <div class="side-quest-wrapper">
+      <div class="side-branch-connector"></div>
+      <${sqTag} ${sqHref} class="side-quest-card ${sideQuestUnlocked ? 'sq-unlocked' : 'sq-locked'}" ${sideQuestUnlocked ? '' : 'aria-disabled="true"'}>
+        <div class="sq-card-header">
+          <span class="sq-badge-tag">🐉 Secret Area</span>
+          <span class="area-badge ${sideQuestUnlocked ? 'badge-available' : 'badge-locked'}">
+            ${sideQuestUnlocked ? (sqDone === sqTotal ? 'Conquered' : 'Unlocked') : 'Locked'}
+          </span>
+        </div>
+        <h3 class="sq-title">${sideQuest.name}</h3>
+        <p class="sq-desc">Optional BST Mastery Side Quest. Unlocks after conquering Area 7 (Trees).</p>
+        <div class="area-progress-section">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill sq-progress-fill" style="width: ${sqPercent}%;"></div>
+          </div>
+          <div class="progress-label">
+            <span>${sqDone} / ${sqTotal} trials</span>
+            <span>${sqPercent}%</span>
+          </div>
+        </div>
+      </${sqTag}>
+    </div>
+  `;
+
   container.innerHTML = `
     <div class="map-view">
       <header class="map-header">
@@ -73,8 +118,13 @@ export function renderMapView(container) {
         ${areaNodesHtml}
       </ol>
 
-      <!-- Side Quest Branch: reserved for subsequent steps -->
-      <section id="side-quest-branch" class="side-quest-branch" aria-label="Side Quest Branch"></section>
+      <!-- Side Quest Branch -->
+      <section id="side-quest-branch" class="side-quest-branch-section" aria-label="Side Quest Branch">
+        <div class="side-quest-divider">
+          <span>Branch Path</span>
+        </div>
+        ${sideQuestBranchHtml}
+      </section>
     </div>
   `;
 }

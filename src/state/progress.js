@@ -1,11 +1,30 @@
 const STORAGE_KEY = "dsa-souls-progress-v1";
 
+let memoryFallback = null;
+
 export const STATUSES = Object.freeze({
   UNTOUCHED: "untouched",
   CLEARED: "cleared",
   DIED: "died",
   SKIPPED: "skipped"
 });
+
+/**
+ * Checks if localStorage is available and functional
+ */
+export function isStorageAvailable() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) {
+      return false;
+    }
+    const testKey = "__dsa_souls_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Returns a fresh, default state object
@@ -20,14 +39,17 @@ export function getDefaultState() {
 }
 
 /**
- * Safely loads state from localStorage
- * Returns default state if storage is empty, corrupted, or unavailable
+ * Safely loads state from localStorage (or in-memory fallback)
  */
 export function loadProgress() {
-  try {
-    if (typeof window === "undefined" || !window.localStorage) {
-      return getDefaultState();
+  if (!isStorageAvailable()) {
+    if (!memoryFallback) {
+      memoryFallback = getDefaultState();
     }
+    return memoryFallback;
+  }
+
+  try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultState();
     
@@ -48,15 +70,19 @@ export function loadProgress() {
 }
 
 /**
- * Safely writes state to localStorage
+ * Safely writes state to localStorage (or in-memory fallback)
  */
 export function saveProgress(state) {
+  if (!isStorageAvailable()) {
+    memoryFallback = state;
+    return;
+  }
+
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (err) {
     console.error("Failed to save progress to localStorage:", err);
+    memoryFallback = state;
   }
 }
 

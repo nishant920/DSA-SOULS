@@ -1,0 +1,202 @@
+:root {
+  --bg-primary: #0a0a0c;
+  --bg-secondary: #121216;
+  --bg-card: #18181f;
+  --border-color: #2b2b36;
+  
+  --ember-orange: #e06d2a;
+  --ember-glow: rgba(224, 109, 42, 0.25);
+  --gold-accent: #c9a55c;
+  --gold-muted: #967f4d;
+  
+  --text-main: #d4cfc5;
+  --text-muted: #848077;
+  --text-bright: #f5f2eb;
+
+  --font-heading: 'Cinzel', 'Times New Roman', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --transition-speed: 0.2s;
+  --focus-ring: 2px solid var(--ember-orange);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Layout Shell */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(180deg, #121216 0%, #0a0a0c 100%);
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold-accent);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-shadow: 0 0 10px rgba(201, 165, 92, 0.2);
+}
+
+.site-title:hover {
+  color: var(--ember-orange);
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.nav-link {
+  font-family: var(--font-heading);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--ember-orange);
+  text-shadow: 0 0 8px var(--ember-glow);
+}
+
+.site-main {
+  flex: 1;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text-bright);
+  letter-spacing: 0.04em;
+}
+
+/* Card & Box styling */
+.view-placeholder {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.view-placeholder h2 {
+  color: var(--gold-accent);
+  margin-bottom: 0.75rem;
+}
+
+.view-placeholder p {
+  color: var(--text-muted);
+}
+
+/* 404 Lost in the Dark */
+.lost-view {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.lost-view h2 {
+  font-size: 2rem;
+  color: var(--ember-orange);
+  margin-bottom: 1rem;
+}
+
+.lost-view a {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--gold-accent);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  border: 1px solid var(--gold-muted);
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  transition: all var(--transition-speed);
+}
+
+.lost-view a:hover {
+  background: var(--ember-orange);
+  color: var(--bg-primary);
+  border-color: var(--ember-orange);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .site-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .site-nav {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 1rem;
+  }
+
+  .site-main {
+    padding: 1.25rem 1rem;
+  }
+}

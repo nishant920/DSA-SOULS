@@ -794,6 +794,209 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-muted);
 }
 
+/* Area Notes Section */
+.area-notes-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notes-header h2 {
+  font-size: 1.25rem;
+  color: var(--gold-accent);
+}
+
+.notes-status-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.notes-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.notes-textarea {
+  width: 100%;
+  background: #0d0d12;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-bright);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  padding: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color var(--transition-speed);
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 10px rgba(201, 165, 92, 0.2);
+}
+
+/* =========================================
+   Notes Page View Styling (#/notes)
+   ========================================= */
+.notes-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.notes-view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.notes-title {
+  font-size: 2.2rem;
+  color: var(--gold-accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+}
+
+.notes-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.btn-download {
+  background: linear-gradient(180deg, #1f1d18 0%, #151410 100%);
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-muted);
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  padding: 0.65rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-speed);
+}
+
+.btn-download:hover {
+  background: var(--gold-muted);
+  color: #fff;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(201, 165, 92, 0.35);
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.note-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.note-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-bottom: 1px solid #242430;
+  padding-bottom: 0.75rem;
+}
+
+.note-area-tag {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--ember-orange);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.note-area-name {
+  font-size: 1.35rem;
+  color: var(--text-bright);
+}
+
+.note-body {
+  color: var(--text-main);
+}
+
+.note-text-content {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+  color: #dedad2;
+}
+
+.notes-empty-state {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.notes-empty-state h3 {
+  font-size: 1.35rem;
+  color: var(--gold-accent);
+  margin-bottom: 0.5rem;
+}
+
+.notes-empty-state p {
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 0 auto 1.5rem auto;
+  font-size: 0.92rem;
+}
+
+.action-btn-link {
+  display: inline-block;
+  background: #111116;
+  color: var(--gold-accent);
+  border: 1px solid var(--gold-muted);
+  font-family: var(--font-heading);
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all var(--transition-speed);
+}
+
+.action-btn-link:hover {
+  background: var(--ember-orange);
+  color: #fff;
+  border-color: var(--ember-orange);
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .problem-row {
@@ -811,5 +1014,10 @@ h1, h2, h3, h4, h5, h6 {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .notes-view-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

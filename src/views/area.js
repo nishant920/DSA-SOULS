@@ -1,11 +1,13 @@
 import { areas } from '../data/problems.js';
-import { loadProgress, saveProgress, setStatus, setBossSkipped } from '../state/progress.js';
+import { loadProgress, saveProgress, setStatus, setBossSkipped, setNote } from '../state/progress.js';
 import { isAreaUnlocked, isBossUnlocked, needsResolve } from '../lib/unlock.js';
 import { leetcodeUrl } from '../lib/links.js';
 
 function getTodayString() {
   return new Date().toISOString().split('T')[0];
 }
+
+let debounceTimer = null;
 
 export function renderAreaView(container, params, triggerDiedBanner = false) {
   const areaId = params?.id;
@@ -29,6 +31,7 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
   const bossUnlocked = isBossUnlocked(state, area);
   const isBossCleared = area.boss && state.problems[area.boss.id]?.status === 'cleared';
   const isBossSkipped = Boolean(state.bossSkipped[area.id]);
+  const currentNote = state.notes[area.id] || '';
 
   function renderProblemRow(problem, isEasy = false, isBoss = false) {
     const probState = state.problems[problem.id] || { status: 'untouched', diedOn: null, clearedOn: null };
@@ -147,6 +150,11 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     `
     : '';
 
+  const notesPlaceholder = `1. The Cue: 
+2. The Template: 
+3. The Common Bug: 
+4. Best Lesson (Problem that taught the most):`;
+
   container.innerHTML = `
     ${youDiedBanner}
     <div class="area-detail-view">
@@ -208,8 +216,50 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
                </div>`
         }
       </section>
+
+      <!-- Area Bonfire Notes Section -->
+      <section class="area-notes-section">
+        <div class="notes-header">
+          <h2>Bonfire Notes (Area ${area.order})</h2>
+          <span id="notes-status-badge" class="notes-status-badge">Auto-saved</span>
+        </div>
+        <p class="notes-hint">
+          After conquering or moving on from the boss, write down your key learnings:
+        </p>
+        <textarea 
+          id="area-notes-input" 
+          class="notes-textarea" 
+          rows="6" 
+          placeholder="${notesPlaceholder}"
+          aria-label="Area battle notes"
+        ></textarea>
+      </section>
     </div>
   `;
+
+  // Safely populate textarea value to prevent XSS / markup issues
+  const textarea = container.querySelector('#area-notes-input');
+  if (textarea) {
+    textarea.value = currentNote;
+
+    textarea.addEventListener('input', (e) => {
+      const badge = container.querySelector('#notes-status-badge');
+      if (badge) badge.textContent = 'Saving...';
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const text = e.target.value;
+        state = setNote(state, area.id, text);
+        saveProgress(state);
+        if (badge) {
+          badge.textContent = 'Saved';
+          setTimeout(() => {
+            if (badge) badge.textContent = 'Auto-saved';
+          }, 1500);
+        }
+      }, 400);
+    });
+  }
 
   // If YOU DIED banner is rendered, remove after animation completes
   if (triggerDiedBanner) {
@@ -223,7 +273,7 @@ export function renderAreaView(container, params, triggerDiedBanner = false) {
     }
   }
 
-  // Event delegation on container
+  // Event delegation on container for button clicks
   container.onclick = (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn || btn.disabled) return;

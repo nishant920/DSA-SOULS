@@ -1,5 +1,5 @@
 import { areas } from '../data/problems.js';
-import { loadProgress, saveProgress, setStatus } from '../state/progress.js';
+import { loadProgress, saveProgress, setStatus, setBossSkipped } from '../state/progress.js';
 import { isAreaUnlocked, isBossUnlocked, needsResolve } from '../lib/unlock.js';
 import { leetcodeUrl } from '../lib/links.js';
 
@@ -7,7 +7,7 @@ function getTodayString() {
   return new Date().toISOString().split('T')[0];
 }
 
-export function renderAreaView(container, params) {
+export function renderAreaView(container, params, triggerDiedBanner = false) {
   const areaId = params?.id;
   const area = areas.find((a) => a.id === areaId);
 
@@ -27,8 +27,10 @@ export function renderAreaView(container, params) {
 
   const today = getTodayString();
   const bossUnlocked = isBossUnlocked(state, area);
+  const isBossCleared = area.boss && state.problems[area.boss.id]?.status === 'cleared';
+  const isBossSkipped = Boolean(state.bossSkipped[area.id]);
 
-  function renderProblemRow(problem, isEasy = false) {
+  function renderProblemRow(problem, isEasy = false, isBoss = false) {
     const probState = state.problems[problem.id] || { status: 'untouched', diedOn: null, clearedOn: null };
     const status = probState.status;
 
@@ -36,16 +38,17 @@ export function renderAreaView(container, params) {
     const isCleared = status === 'cleared';
     const isSkipped = status === 'skipped';
     const readyToResolve = isDied && needsResolve(probState, today);
-    const diedToday = isDied && probState.diedOn === today;
 
     // Disabled rule: if problem died today, Cleared is disabled
     const disableCleared = isDied && !readyToResolve;
 
     let badgeHtml = '';
     if (isCleared) {
-      badgeHtml = `<span class="prob-badge badge-cleared">Cleared</span>`;
+      badgeHtml = `<span class="prob-badge badge-cleared">${isBoss ? 'Boss Defeated' : 'Cleared'}</span>`;
     } else if (isSkipped) {
       badgeHtml = `<span class="prob-badge badge-skipped">Skipped</span>`;
+    } else if (isBoss && isBossSkipped) {
+      badgeHtml = `<span class="prob-badge badge-moved-on">Moved On</span>`;
     } else if (isDied) {
       if (readyToResolve) {
         badgeHtml = `<span class="prob-badge badge-ready">Ready to re-solve</span>`;
@@ -54,8 +57,24 @@ export function renderAreaView(container, params) {
       }
     }
 
+    let moveOnControl = '';
+    if (isBoss) {
+      moveOnControl = `
+        <div class="boss-move-on-container">
+          <button 
+            type="button" 
+            class="action-btn btn-move-on ${isBossSkipped ? 'active' : ''}" 
+            data-action="toggle-move-on"
+          >
+            ${isBossSkipped ? 'Boss Skipped (Moved On)' : 'Move on (boss defeated me)'}
+          </button>
+          <span class="move-on-note">"Read the solution, write it in your notes, and move on."</span>
+        </div>
+      `;
+    }
+
     return `
-      <div class="problem-row status-${status}" data-problem-id="${problem.id}">
+      <div class="problem-row status-${status} ${isBoss ? 'problem-row-boss' : ''}" data-problem-id="${problem.id}">
         <div class="problem-info">
           <span class="problem-number">#${problem.number}</span>
           <span class="problem-title">${problem.title}</span>
@@ -104,15 +123,38 @@ export function renderAreaView(container, params) {
             Reset
           </button>
         </div>
+
+        ${moveOnControl}
       </div>
     `;
   }
 
+  const bossDefeatedBanner = isBossCleared
+    ? `
+      <div class="banner-boss-defeated" role="status">
+        <div class="banner-spark">✦</div>
+        <h2>BOSS DEFEATED</h2>
+        <div class="banner-spark">✦</div>
+      </div>
+    `
+    : '';
+
+  const youDiedBanner = triggerDiedBanner
+    ? `
+      <div id="you-died-overlay" class="you-died-overlay" role="alert">
+        <h1 class="you-died-text">YOU DIED</h1>
+      </div>
+    `
+    : '';
+
   container.innerHTML = `
+    ${youDiedBanner}
     <div class="area-detail-view">
       <nav class="area-breadcrumbs">
         <a href="#/" class="back-link">← Return to Map</a>
       </nav>
+
+      ${bossDefeatedBanner}
 
       <header class="area-view-header">
         <div class="area-tag">Area ${area.order}</div>
@@ -133,7 +175,7 @@ export function renderAreaView(container, params) {
           <span class="tier-meta">Learn the area pattern. Skip rule: under 10m on first 2 skips remaining.</span>
         </div>
         <div class="problem-list" data-tier="easy">
-          ${area.easy.map((p) => renderProblemRow(p, true)).join('')}
+          ${area.easy.map((p) => renderProblemRow(p, true, false)).join('')}
         </div>
       </section>
 
@@ -144,7 +186,7 @@ export function renderAreaView(container, params) {
           <span class="tier-meta">Clear all mediums without help to open the boss gate.</span>
         </div>
         <div class="problem-list" data-tier="medium">
-          ${area.medium.map((p) => renderProblemRow(p, false)).join('')}
+          ${area.medium.map((p) => renderProblemRow(p, false, false)).join('')}
         </div>
       </section>
 
@@ -157,7 +199,7 @@ export function renderAreaView(container, params) {
         ${
           bossUnlocked
             ? `<div class="problem-list" data-tier="boss">
-                 ${renderProblemRow(area.boss, false)}
+                 ${renderProblemRow(area.boss, false, true)}
                </div>`
             : `<div class="boss-gate-locked">
                  <div class="fog-gate-icon">🌫️</div>
@@ -169,21 +211,41 @@ export function renderAreaView(container, params) {
     </div>
   `;
 
-  // Attach event delegation for action buttons (only one listener on container)
+  // If YOU DIED banner is rendered, remove after animation completes
+  if (triggerDiedBanner) {
+    const overlay = document.getElementById('you-died-overlay');
+    if (overlay) {
+      setTimeout(() => {
+        if (overlay && overlay.parentNode) {
+          overlay.remove();
+        }
+      }, 3000);
+    }
+  }
+
+  // Event delegation on container
   container.onclick = (e) => {
     const btn = e.target.closest('button[data-action]');
     if (!btn || btn.disabled) return;
+
+    const action = btn.dataset.action;
+
+    if (action === 'toggle-move-on') {
+      const nextSkippedState = !isBossSkipped;
+      state = setBossSkipped(state, area.id, nextSkippedState);
+      saveProgress(state);
+      renderAreaView(container, params, false);
+      return;
+    }
 
     const row = btn.closest('[data-problem-id]');
     if (!row) return;
 
     const problemId = row.dataset.problemId;
-    const action = btn.dataset.action;
-
     state = setStatus(state, problemId, action);
     saveProgress(state);
 
-    // Pure redraw from state
-    renderAreaView(container, params);
+    const isDiedAction = action === 'died';
+    renderAreaView(container, params, isDiedAction);
   };
 }

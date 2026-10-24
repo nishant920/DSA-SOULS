@@ -10,6 +10,7 @@ export function renderMapView(container) {
       const unlocked = isAreaUnlocked(state, areas, area.id);
       const { done, total } = areaProgress(state, area);
       const isConquered = area.boss && state.problems[area.boss.id]?.status === 'cleared';
+      const isBossSkipped = Boolean(state.bossSkipped[area.id]);
 
       let status = 'locked';
       let statusLabel = 'Locked';
@@ -18,6 +19,9 @@ export function renderMapView(container) {
         if (isConquered) {
           status = 'conquered';
           statusLabel = 'Conquered';
+        } else if (isBossSkipped) {
+          status = 'moved-on';
+          statusLabel = 'Moved On';
         } else if (done > 0) {
           status = 'in-progress';
           statusLabel = 'In Progress';

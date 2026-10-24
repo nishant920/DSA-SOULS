@@ -1,4 +1,3 @@
-import './styles/theme.css';
 import { Router } from './router.js';
 import { isStorageAvailable } from './state/progress.js';
 import { renderMapView } from './views/map.js';
